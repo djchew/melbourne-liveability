@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Environment
+.env
+*.env.local
+
+# Data files (keep folder structure, ignore content)
+data/inbound/*
+data/processed/*
+!data/inbound/.gitkeep
+!data/processed/.gitkeep
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
