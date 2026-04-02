@@ -11,6 +11,7 @@ Weights (must sum to 1.0):
   - Affordability       15%
 """
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from ingestion.base import get_db_connection
 
@@ -23,17 +24,25 @@ WEIGHTS = {
 }
 
 
-def fetch_raw_metrics(conn) -> pd.DataFrame:
+def fetch_raw_metrics() -> pd.DataFrame:
     """Pull the latest metrics for all suburbs into a single DataFrame."""
-    query = """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
         SELECT
             s.id AS suburb_id,
             s.name,
+            cs.offence_count,
             cs.rate_per_100k,
             ts.stop_count,
-            ts.services_per_day,
+            ts.nearest_train_km,
+            ts.nearest_tram_km,
+            ts.nearest_bus_km,
             ss.avg_icsea_score,
+            ss.school_count,
             gs.green_pct_of_suburb,
+            gs.park_count,
+            gs.nearest_park_km,
             pp.median_house_price
         FROM suburbs s
         LEFT JOIN crime_stats cs ON cs.suburb_id = s.id
@@ -41,32 +50,58 @@ def fetch_raw_metrics(conn) -> pd.DataFrame:
         LEFT JOIN school_scores ss ON ss.suburb_id = s.id
         LEFT JOIN greenspace_scores gs ON gs.suburb_id = s.id
         LEFT JOIN property_prices pp ON pp.suburb_id = s.id
-        WHERE cs.year = (SELECT MAX(year) FROM crime_stats)
-          AND pp.year = (SELECT MAX(year) FROM property_prices)
-    """
-    return pd.read_sql(query, conn)
+    """)
+    columns = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    df = pd.DataFrame(rows, columns=columns)
+    print(f"Fetched metrics for {len(df)} suburbs")
+    print(f"Data coverage:")
+    print(f"  Crime:     {df['rate_per_100k'].notna().sum()}/{len(df)}")
+    print(f"  Transport: {df['stop_count'].notna().sum()}/{len(df)}")
+    print(f"  Schools:   {df['avg_icsea_score'].notna().sum()}/{len(df)}")
+    print(f"  Green:     {df['green_pct_of_suburb'].notna().sum()}/{len(df)}")
+    print(f"  Property:  {df['median_house_price'].notna().sum()}/{len(df)}")
+    return df
 
 
 def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
     """Normalise raw metrics to 0–100 scores and compute weighted total."""
     scaler = MinMaxScaler(feature_range=(0, 100))
 
-    # Crime: invert so lower crime rate = higher score
-    df["score_crime"] = 100 - scaler.fit_transform(df[["rate_per_100k"]])
+    # Crime: invert so lower crime = higher score. Fill missing with median.
+    crime = df[["rate_per_100k"]].copy()
+    crime = crime.fillna(crime.median())
+    df["score_crime"] = 100 - scaler.fit_transform(crime)
 
-    # Transport: more stops + services = higher score
-    df["score_transport"] = scaler.fit_transform(
-        df[["stop_count", "services_per_day"]].fillna(0).mean(axis=1).values.reshape(-1, 1)
-    )
+    # Transport: composite of stop count + proximity to train/tram/bus
+    # Invert distances (closer = better), then combine with stop count
+    transport = df[["stop_count", "nearest_train_km", "nearest_tram_km", "nearest_bus_km"]].copy()
+    transport = transport.fillna({"stop_count": 0, "nearest_train_km": 50, "nearest_tram_km": 50, "nearest_bus_km": 50})
+    # Invert distances: max distance - actual distance
+    for col in ["nearest_train_km", "nearest_tram_km", "nearest_bus_km"]:
+        transport[col] = transport[col].max() - transport[col]
+    # Normalise each component then average
+    for col in transport.columns:
+        transport[col] = scaler.fit_transform(transport[[col]])
+    df["score_transport"] = transport.mean(axis=1)
 
-    # Schools: higher ICSEA = higher score
-    df["score_schools"] = scaler.fit_transform(df[["avg_icsea_score"]].fillna(df["avg_icsea_score"].median()))
+    # Schools: higher ICSEA = higher score. Fill missing with median.
+    schools = df[["avg_icsea_score"]].copy()
+    schools = schools.fillna(schools.median())
+    df["score_schools"] = scaler.fit_transform(schools)
 
     # Green space: higher green % = higher score
-    df["score_greenspace"] = scaler.fit_transform(df[["green_pct_of_suburb"]].fillna(0))
+    green = df[["green_pct_of_suburb"]].copy()
+    green = green.fillna(0)
+    df["score_greenspace"] = scaler.fit_transform(green)
 
-    # Affordability: invert so lower price = higher score
-    df["score_affordability"] = 100 - scaler.fit_transform(df[["median_house_price"]].fillna(df["median_house_price"].median()))
+    # Affordability: invert so lower price = higher score. Fill missing with median.
+    price = df[["median_house_price"]].copy()
+    price = price.fillna(price.median())
+    df["score_affordability"] = 100 - scaler.fit_transform(price)
 
     # Weighted composite
     df["score_total"] = sum(df[col] * weight for col, weight in WEIGHTS.items())
@@ -74,8 +109,9 @@ def compute_scores(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def save_scores(df: pd.DataFrame, conn):
+def save_scores(df: pd.DataFrame):
     """Upsert computed scores into liveability_scores."""
+    conn = get_db_connection()
     cur = conn.cursor()
     for _, row in df.iterrows():
         cur.execute(
@@ -94,23 +130,28 @@ def save_scores(df: pd.DataFrame, conn):
             """,
             (
                 int(row["suburb_id"]),
-                round(row["score_crime"], 2),
-                round(row["score_transport"], 2),
-                round(row["score_schools"], 2),
-                round(row["score_greenspace"], 2),
-                round(row["score_affordability"], 2),
-                round(row["score_total"], 2),
+                round(float(row["score_crime"]), 2),
+                round(float(row["score_transport"]), 2),
+                round(float(row["score_schools"]), 2),
+                round(float(row["score_greenspace"]), 2),
+                round(float(row["score_affordability"]), 2),
+                round(float(row["score_total"]), 2),
             ),
         )
     conn.commit()
     cur.close()
+    conn.close()
     print(f"Saved liveability scores for {len(df)} suburbs.")
 
 
 if __name__ == "__main__":
-    conn = get_db_connection()
-    df = fetch_raw_metrics(conn)
+    df = fetch_raw_metrics()
     df = compute_scores(df)
-    save_scores(df, conn)
-    conn.close()
-    print(df[["name", "score_total"]].sort_values("score_total", ascending=False).head(20).to_string(index=False))
+    save_scores(df)
+    print("\nTop 20 most liveable suburbs:")
+    print(df[["name", "score_total", "score_crime", "score_transport", "score_schools", "score_greenspace", "score_affordability"]]
+          .sort_values("score_total", ascending=False)
+          .head(20)
+          .to_string(index=False))
+    print("\nBottom 10:")
+    print(df[["name", "score_total"]].sort_values("score_total").head(10).to_string(index=False))
