@@ -1,32 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SuburbMap from "@/components/SuburbMap";
 import SuburbCard from "@/components/SuburbCard";
-import { SuburbScore } from "@/lib/api";
+import SearchBar from "@/components/SearchBar";
+import { SuburbScore, SuburbSummary, getSuburbs, getSuburb } from "@/lib/api";
 
 export default function Home() {
   const [selected, setSelected] = useState<SuburbScore | null>(null);
+  const [suburbs, setSuburbs] = useState<SuburbSummary[]>([]);
+
+  useEffect(() => {
+    getSuburbs().then(setSuburbs).catch(console.error);
+  }, []);
+
+  const handleSearchSelect = async (s: SuburbSummary) => {
+    const detail = await getSuburb(s.suburb_id);
+    setSelected(detail);
+  };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
-      {/* Map — takes full height on the left */}
-      <div className="flex-1 relative">
-        <SuburbMap onSuburbSelect={setSelected} />
-      </div>
+    <div className="relative h-[calc(100vh-4rem)]">
+      {/* Map — full screen */}
+      <SuburbMap onSuburbSelect={setSelected} />
 
-      {/* Sidebar — slides in when a suburb is selected */}
-      <aside
-        className={`
-          w-80 shrink-0 bg-surface-card border-l border-surface-border
-          overflow-y-auto transition-all duration-300
-          ${selected ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 w-0"}
-        `}
-      >
-        {selected && (
+      {/* Search bar — overlaid on map */}
+      <SearchBar suburbs={suburbs} onSelect={handleSearchSelect} />
+
+      {/* Sidebar — slides in from right when a suburb is selected */}
+      {selected && (
+        <aside className="absolute top-0 right-0 h-full w-80 bg-surface-card border-l border-surface-border overflow-y-auto shadow-2xl animate-slide-in">
           <SuburbCard suburb={selected} onClose={() => setSelected(null)} />
-        )}
-      </aside>
+        </aside>
+      )}
     </div>
   );
 }
