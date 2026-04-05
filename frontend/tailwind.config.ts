@@ -17,9 +17,9 @@ const config: Config = {
           best:   "#06b6d4",   // cyan
         },
         surface: {
-          DEFAULT: "#0f172a",  // dark navy background
-          card:    "#1e293b",
-          border:  "#334155",
+          DEFAULT: "#f8fafc",  // slate-50 background
+          card:    "#ffffff",
+          border:  "#e2e8f0",  // slate-200
         },
       },
       fontFamily: {

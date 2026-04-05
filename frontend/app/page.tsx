@@ -20,7 +20,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative h-[calc(100vh-4rem)]">
+    <div className="relative h-screen">
       {/* Map — full screen */}
       <SuburbMap onSuburbSelect={setSelected} />
 
@@ -29,7 +29,7 @@ export default function Home() {
 
       {/* Sidebar — slides in from right when a suburb is selected */}
       {selected && (
-        <aside className="absolute top-0 right-0 h-full w-80 bg-surface-card border-l border-surface-border overflow-y-auto shadow-2xl animate-slide-in">
+        <aside className="absolute top-16 right-0 bottom-0 w-80 bg-white border-l border-slate-200 overflow-y-auto shadow-xl animate-slide-in">
           <SuburbCard suburb={selected} onClose={() => setSelected(null)} />
         </aside>
       )}

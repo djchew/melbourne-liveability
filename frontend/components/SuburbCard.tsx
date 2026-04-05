@@ -1,8 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X, ShieldCheck, Train, GraduationCap, Leaf, Banknote } from "lucide-react";
 import { SuburbScore } from "@/lib/api";
-import ScoreBreakdown from "./ScoreBreakdown";
 
 interface Props {
   suburb: SuburbScore;
@@ -11,69 +10,86 @@ interface Props {
 
 const fmt = (v: number | null) => (v !== null ? v.toFixed(1) : "—");
 
-const scoreColor = (v: number | null) => {
-  if (v === null) return "text-slate-400";
-  if (v >= 80) return "text-cyan-400";
-  if (v >= 65) return "text-green-400";
-  if (v >= 50) return "text-yellow-400";
-  if (v >= 35) return "text-orange-400";
-  return "text-red-400";
+const scoreTheme = (v: number | null): { text: string; bar: string; border: string; bg: string } => {
+  if (v === null) return { text: "text-slate-400", bar: "bg-slate-300", border: "border-slate-200", bg: "bg-slate-50" };
+  if (v >= 80) return { text: "text-cyan-600",   bar: "bg-cyan-500",   border: "border-cyan-200",  bg: "bg-cyan-50" };
+  if (v >= 65) return { text: "text-green-600",  bar: "bg-green-500",  border: "border-green-200", bg: "bg-green-50" };
+  if (v >= 50) return { text: "text-amber-600",  bar: "bg-amber-400",  border: "border-amber-200", bg: "bg-amber-50" };
+  if (v >= 35) return { text: "text-orange-600", bar: "bg-orange-500", border: "border-orange-200",bg: "bg-orange-50" };
+  return         { text: "text-red-600",    bar: "bg-red-500",    border: "border-red-200",   bg: "bg-red-50" };
 };
 
+const grade = (v: number | null) => {
+  if (v === null) return "–";
+  if (v >= 80) return "A";
+  if (v >= 65) return "B";
+  if (v >= 50) return "C";
+  if (v >= 35) return "D";
+  return "F";
+};
+
+const METRICS = [
+  { label: "Safety",        key: "score_crime",         Icon: ShieldCheck },
+  { label: "Transport",     key: "score_transport",      Icon: Train },
+  { label: "Schools",       key: "score_schools",        Icon: GraduationCap },
+  { label: "Green space",   key: "score_greenspace",     Icon: Leaf },
+  { label: "Affordability", key: "score_affordability",  Icon: Banknote },
+] as const;
+
 export default function SuburbCard({ suburb, onClose }: Props) {
+  const total = suburb.score_total;
+  const theme = scoreTheme(total);
+
   return (
-    <div className="p-5 space-y-5">
+    <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-white">{suburb.name}</h2>
-          <p className="text-sm text-slate-400">Greater Melbourne</p>
+      <div className="flex items-start justify-between px-5 pt-6 pb-4 border-b border-slate-100 sticky top-0 bg-white">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold text-slate-900 leading-tight">
+            {suburb.name ? suburb.name.replace(/ \(Vic\.\)/, "") : "Suburb"}
+          </h2>
+          <p className="text-xs text-slate-400 mt-1">Greater Melbourne</p>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg hover:bg-surface-border transition-colors"
+          className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors mt-0.5"
         >
-          <X size={16} className="text-slate-400" />
+          <X size={15} className="text-slate-400" />
         </button>
       </div>
 
-      {/* Total score */}
-      <div className="flex items-center justify-between bg-surface/60 rounded-xl px-4 py-3 border border-surface-border">
-        <span className="text-sm text-slate-300 font-medium">Overall score</span>
-        <span className={`text-3xl font-bold ${scoreColor(suburb.score_total)}`}>
-          {fmt(suburb.score_total)}
-        </span>
+      {/* Overall score */}
+      <div className={`mx-5 mt-4 rounded-xl border ${theme.border} ${theme.bg} px-4 py-3 flex items-center justify-between`}>
+        <div>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Liveability score</p>
+          <p className={`text-3xl font-bold mt-0.5 ${theme.text}`}>{fmt(total)}</p>
+        </div>
+        <div className={`text-4xl font-black ${theme.text} opacity-20`}>{grade(total)}</div>
       </div>
 
-      {/* Score breakdown chart */}
-      <ScoreBreakdown suburb={suburb} />
-
-      {/* Score rows */}
-      <div className="space-y-2">
-        {[
-          { label: "Safety",       value: suburb.score_crime },
-          { label: "Transport",    value: suburb.score_transport },
-          { label: "Schools",      value: suburb.score_schools },
-          { label: "Green space",  value: suburb.score_greenspace },
-          { label: "Affordability",value: suburb.score_affordability },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex items-center gap-3">
-            <span className="text-sm text-slate-400 w-28 shrink-0">{label}</span>
-            <div className="flex-1 h-1.5 bg-surface-border rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full ${
-                  value !== null && value >= 65 ? "bg-green-500" :
-                  value !== null && value >= 50 ? "bg-yellow-400" :
-                  value !== null && value >= 35 ? "bg-orange-500" : "bg-red-500"
-                }`}
-                style={{ width: `${value ?? 0}%` }}
-              />
+      {/* Category scores */}
+      <div className="px-5 mt-5 space-y-3 pb-6">
+        {METRICS.map(({ label, key, Icon }) => {
+          const val = suburb[key];
+          const t = scoreTheme(val);
+          return (
+            <div key={label}>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Icon size={13} className="text-slate-400" />
+                  <span className="text-xs font-medium text-slate-600">{label}</span>
+                </div>
+                <span className={`text-xs font-semibold ${t.text}`}>{fmt(val)}</span>
+              </div>
+              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${t.bar} transition-all`}
+                  style={{ width: `${val ?? 0}%` }}
+                />
+              </div>
             </div>
-            <span className={`text-sm font-semibold w-8 text-right ${scoreColor(value)}`}>
-              {fmt(value)}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

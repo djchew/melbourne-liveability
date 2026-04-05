@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import MapGL, { NavigationControl } from "react-map-gl/maplibre";
-import { ScatterplotLayer } from "@deck.gl/layers";
-import { DeckGL } from "@deck.gl/react";
-import { getSuburbs, getSuburb, scoreToColor, SuburbSummary, SuburbScore } from "@/lib/api";
+import MapGL, { NavigationControl, Source, Layer } from "react-map-gl/maplibre";
+import { getSuburb, SuburbScore } from "@/lib/api";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const INITIAL_VIEW = {
@@ -15,108 +13,150 @@ const INITIAL_VIEW = {
   bearing: 0,
 };
 
-// Smooth dark style with clear labels
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+// Google Maps-like style with clear labels
+const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+
+// MapLibre expression: colour each polygon by its score_total value
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SCORE_COLOR_EXPR: any = [
+  "case",
+  ["==", ["get", "score_total"], null], "#475569",
+  [">=", ["get", "score_total"], 80], "#06b6d4",
+  [">=", ["get", "score_total"], 65], "#22c55e",
+  [">=", ["get", "score_total"], 50], "#eab308",
+  [">=", ["get", "score_total"], 35], "#f97316",
+  "#ef4444",
+];
 
 interface Props {
   onSuburbSelect: (suburb: SuburbScore) => void;
 }
 
 export default function SuburbMap({ onSuburbSelect }: Props) {
-  const [suburbs, setSuburbs] = useState<SuburbSummary[]>([]);
+  const [geojson, setGeojson] = useState<{ type: string; features: any[] } | null>(null);
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
-    suburb: SuburbSummary;
+    name: string;
+    score: number | null;
   } | null>(null);
+  const [cursor, setCursor] = useState("grab");
+  // ID of the first symbol (label) layer in the basemap — our fills render below it
+  const [firstLabelId, setFirstLabelId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    getSuburbs().then(setSuburbs).catch(console.error);
+    fetch("/api/suburbs/geojson")
+      .then((r) => r.json())
+      .then(setGeojson)
+      .catch(console.error);
   }, []);
 
   const handleClick = useCallback(
-    async (info: { object?: SuburbSummary }) => {
-      if (!info.object) return;
-      const detail = await getSuburb(info.object.suburb_id);
+    async (e: any) => {
+      const feature = e.features?.[0];
+      if (!feature) return;
+      const suburb_id = feature.properties?.suburb_id;
+      if (!suburb_id) return;
+      const detail = await getSuburb(suburb_id);
       onSuburbSelect(detail);
     },
     [onSuburbSelect]
   );
 
-  const layers = [
-    new ScatterplotLayer<SuburbSummary>({
-      id: "suburbs",
-      data: suburbs.filter((s) => s.latitude && s.longitude),
-      getPosition: (d) => [d.longitude!, d.latitude!],
-      getRadius: 500,
-      radiusMinPixels: 5,
-      radiusMaxPixels: 18,
-      getFillColor: (d) => scoreToColor(d.score_total),
-      getLineColor: [255, 255, 255, 50],
-      lineWidthMinPixels: 1,
-      stroked: true,
-      pickable: true,
-      autoHighlight: true,
-      highlightColor: [255, 255, 255, 80],
-      onClick: (info) => info.object && handleClick(info),
-      onHover: (info) => {
-        if (info.object) {
-          setTooltip({ x: info.x, y: info.y, suburb: info.object });
-        } else {
-          setTooltip(null);
-        }
-      },
-    }),
-  ];
+  const handleMapLoad = useCallback((e: any) => {
+    const map = e.target;
+    const firstSymbol = map.getStyle().layers.find((l: any) => l.type === "symbol");
+    if (firstSymbol) setFirstLabelId(firstSymbol.id);
+  }, []);
+
+  const handleMouseMove = useCallback((e: any) => {
+    const feature = e.features?.[0];
+    if (feature) {
+      setCursor("pointer");
+      setTooltip({
+        x: e.point.x,
+        y: e.point.y,
+        name: (feature.properties?.name ?? "").replace(/ \(Vic\.\)/, ""),
+        score: feature.properties?.score_total ?? null,
+      });
+    } else {
+      setCursor("grab");
+      setTooltip(null);
+    }
+  }, []);
 
   return (
-    <DeckGL
-      initialViewState={INITIAL_VIEW}
-      controller
-      layers={layers}
-      getCursor={({ isHovering }) => (isHovering ? "pointer" : "grab")}
-    >
+    <div className="relative w-full h-full bg-slate-100" style={{ cursor }}>
       <MapGL
+        initialViewState={INITIAL_VIEW}
         mapStyle={MAP_STYLE}
         attributionControl={false}
+        interactiveLayerIds={["suburb-fills"]}
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => { setCursor("grab"); setTooltip(null); }}
+        onLoad={handleMapLoad}
+        style={{ width: "100%", height: "100%" }}
       >
         <NavigationControl position="bottom-right" showCompass={false} />
+
+        {geojson && (
+          <Source id="suburbs-geo" type="geojson" data={geojson}>
+            <Layer
+              id="suburb-fills"
+              type="fill"
+              beforeId={firstLabelId}
+              paint={{
+                "fill-color": SCORE_COLOR_EXPR,
+                "fill-opacity": 0.25,
+              }}
+            />
+            <Layer
+              id="suburb-borders"
+              type="line"
+              beforeId={firstLabelId}
+              paint={{
+                "line-color": "#94a3b8",
+                "line-width": 0.8,
+                "line-opacity": 0.6,
+              }}
+            />
+          </Source>
+        )}
       </MapGL>
 
       {/* Hover tooltip */}
       {tooltip && (
         <div
-          className="absolute pointer-events-none z-20 bg-surface-card/95 backdrop-blur border border-surface-border rounded-lg px-3 py-2 shadow-xl"
+          className="absolute pointer-events-none z-20 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-lg"
           style={{ left: tooltip.x + 12, top: tooltip.y - 12 }}
         >
-          <p className="text-sm font-semibold text-white">
-            {tooltip.suburb.name.replace(/ \(Vic\.\)/, "")}
-          </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm font-semibold text-slate-900">{tooltip.name}</p>
+          <p className="text-xs text-slate-500">
             Score:{" "}
-            <span className="text-slate-200 font-medium">
-              {tooltip.suburb.score_total?.toFixed(1) ?? "—"}
+            <span className="text-slate-700 font-medium">
+              {tooltip.score != null ? Number(tooltip.score).toFixed(1) : "—"}
             </span>
           </p>
         </div>
       )}
 
       {/* Score legend */}
-      <div className="absolute bottom-6 left-6 bg-surface-card/90 backdrop-blur border border-surface-border rounded-xl p-4 text-xs space-y-1.5">
-        <p className="font-semibold text-slate-300 mb-2">Liveability score</p>
+      <div className="absolute bottom-6 left-6 bg-white/95 border border-slate-200 rounded-xl px-3 py-2.5 text-xs shadow-md space-y-1.5">
+        <p className="font-semibold text-slate-600 mb-1.5">Liveability</p>
         {[
-          ["80–100", "bg-cyan-400"],
-          ["65–79", "bg-green-500"],
-          ["50–64", "bg-yellow-400"],
-          ["35–49", "bg-orange-500"],
-          ["0–34", "bg-red-500"],
+          ["High (80–100)", "bg-cyan-500"],
+          ["Good (65–79)",  "bg-green-500"],
+          ["Mid  (50–64)",  "bg-amber-400"],
+          ["Low  (35–49)",  "bg-orange-500"],
+          ["Poor (0–34)",   "bg-red-500"],
         ].map(([label, cls]) => (
           <div key={label} className="flex items-center gap-2">
-            <span className={`w-3 h-3 rounded-full ${cls}`} />
-            <span className="text-slate-400">{label}</span>
+            <span className={`w-2.5 h-2.5 rounded-sm ${cls}`} />
+            <span className="text-slate-500">{label}</span>
           </div>
         ))}
       </div>
-    </DeckGL>
+    </div>
   );
 }
