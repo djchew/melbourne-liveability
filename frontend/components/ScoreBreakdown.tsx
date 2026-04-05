@@ -29,10 +29,10 @@ export default function ScoreBreakdown({ suburb }: Props) {
     <div className="h-52">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
-          <PolarGrid stroke="#334155" />
+          <PolarGrid stroke="#cbd5e1" />
           <PolarAngleAxis
             dataKey="subject"
-            tick={{ fill: "#94a3b8", fontSize: 11 }}
+            tick={{ fill: "#64748b", fontSize: 11 }}
           />
           <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
           <Radar
@@ -44,9 +44,9 @@ export default function ScoreBreakdown({ suburb }: Props) {
             strokeWidth={2}
           />
           <Tooltip
-            contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "0.5rem" }}
-            labelStyle={{ color: "#f1f5f9", fontWeight: 600 }}
-            itemStyle={{ color: "#94a3b8" }}
+            contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "0.5rem" }}
+            labelStyle={{ color: "#0f172a", fontWeight: 600 }}
+            itemStyle={{ color: "#475569" }}
             formatter={(v: number) => [v.toFixed(1), "Score"]}
           />
         </RadarChart>

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS suburbs (
     latitude    NUMERIC(9, 6),
     longitude   NUMERIC(9, 6),
     geometry    TEXT,                  -- GeoJSON polygon (suburb boundary)
+    description TEXT,                  -- AI-generated blurb (updated annually)
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 

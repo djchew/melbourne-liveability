@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import MapGL, { NavigationControl, Source, Layer } from "react-map-gl/maplibre";
 import { getSuburb, SuburbScore } from "@/lib/api";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -16,23 +16,30 @@ const INITIAL_VIEW = {
 // Google Maps-like style with clear labels
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
 
-// MapLibre expression: colour each polygon by its score_total value
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SCORE_COLOR_EXPR: any = [
-  "case",
-  ["==", ["get", "score_total"], null], "#475569",
-  [">=", ["get", "score_total"], 80], "#06b6d4",
-  [">=", ["get", "score_total"], 65], "#22c55e",
-  [">=", ["get", "score_total"], 50], "#eab308",
-  [">=", ["get", "score_total"], 35], "#f97316",
-  "#ef4444",
+const METRICS = [
+  { key: "score_total", label: "Total", abbr: "Total" },
+  { key: "score_crime", label: "Safety", abbr: "Safety" },
+  { key: "score_transport", label: "Transport", abbr: "Transit" },
+  { key: "score_schools", label: "Schools", abbr: "Schools" },
+  { key: "score_greenspace", label: "Green space", abbr: "Green" },
+  { key: "score_affordability", label: "Affordability", abbr: "Price" },
 ];
 
 interface Props {
   onSuburbSelect: (suburb: SuburbScore) => void;
+  activeMetric: string;
+  activeBand: string | null;
+  onMetricChange: (metric: string) => void;
+  onBandChange: (band: string | null) => void;
 }
 
-export default function SuburbMap({ onSuburbSelect }: Props) {
+export default function SuburbMap({
+  onSuburbSelect,
+  activeMetric,
+  activeBand,
+  onMetricChange,
+  onBandChange,
+}: Props) {
   const [geojson, setGeojson] = useState<{ type: string; features: any[] } | null>(null);
   const [tooltip, setTooltip] = useState<{
     x: number;
@@ -43,6 +50,50 @@ export default function SuburbMap({ onSuburbSelect }: Props) {
   const [cursor, setCursor] = useState("grab");
   // ID of the first symbol (label) layer in the basemap — our fills render below it
   const [firstLabelId, setFirstLabelId] = useState<string | undefined>(undefined);
+
+  // Build dynamic color expression based on activeMetric
+  const colorExpr = useMemo(() => {
+    const metricKey = activeMetric;
+    const expr: any = [
+      "case",
+      ["==", ["get", metricKey], null],
+      "#475569",
+      [">=", ["get", metricKey], 80],
+      "#06b6d4",
+      [">=", ["get", metricKey], 65],
+      "#22c55e",
+      [">=", ["get", metricKey], 50],
+      "#eab308",
+      [">=", ["get", metricKey], 35],
+      "#f97316",
+      "#ef4444",
+    ];
+    return expr;
+  }, [activeMetric]);
+
+  // Build dynamic opacity expression for band filtering
+  const opacityExpr: any = useMemo(() => {
+    if (!activeBand) return 0.4;
+    const metricKey = activeMetric;
+    const bandRanges: { [key: string]: [number, number] } = {
+      "A": [80, 100],
+      "B": [65, 79],
+      "C": [50, 64],
+      "D": [35, 49],
+      "F": [0, 34],
+    };
+    const [min, max] = bandRanges[activeBand] || [0, 100];
+    return [
+      "case",
+      [
+        "&&",
+        [">=", ["get", metricKey], min],
+        ["<=", ["get", metricKey], max],
+      ],
+      0.5,
+      0.15,
+    ];
+  }, [activeBand, activeMetric]);
 
   useEffect(() => {
     fetch("/api/suburbs/geojson")
@@ -107,8 +158,8 @@ export default function SuburbMap({ onSuburbSelect }: Props) {
               type="fill"
               beforeId={firstLabelId}
               paint={{
-                "fill-color": SCORE_COLOR_EXPR,
-                "fill-opacity": 0.25,
+                "fill-color": colorExpr,
+                "fill-opacity": opacityExpr,
               }}
             />
             <Layer
@@ -141,21 +192,54 @@ export default function SuburbMap({ onSuburbSelect }: Props) {
         </div>
       )}
 
-      {/* Score legend */}
-      <div className="absolute bottom-6 left-6 bg-white/95 border border-slate-200 rounded-xl px-3 py-2.5 text-xs shadow-md space-y-1.5">
-        <p className="font-semibold text-slate-600 mb-1.5">Liveability</p>
-        {[
-          ["High (80–100)", "bg-cyan-500"],
-          ["Good (65–79)",  "bg-green-500"],
-          ["Mid  (50–64)",  "bg-amber-400"],
-          ["Low  (35–49)",  "bg-orange-500"],
-          ["Poor (0–34)",   "bg-red-500"],
-        ].map(([label, cls]) => (
-          <div key={label} className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-sm ${cls}`} />
-            <span className="text-slate-500">{label}</span>
-          </div>
-        ))}
+      {/* Controls and legend */}
+      <div className="absolute bottom-6 left-6 bg-white/95 border border-slate-200 rounded-xl shadow-md overflow-hidden">
+        {/* Metric tabs */}
+        <div className="border-b border-slate-200 p-2 flex flex-wrap gap-1">
+          {METRICS.map(({ key, abbr }) => (
+            <button
+              key={key}
+              onClick={() => onMetricChange(key)}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                activeMetric === key
+                  ? "bg-cyan-100 text-cyan-700"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {abbr}
+            </button>
+          ))}
+        </div>
+
+        {/* Score band legend */}
+        <div className="px-3 py-2.5 text-xs space-y-1.5">
+          <p className="font-semibold text-slate-600 mb-1.5">Bands</p>
+          {[
+            { label: "A (80–100)", color: "bg-cyan-500", band: "A" },
+            { label: "B (65–79)", color: "bg-green-500", band: "B" },
+            { label: "C (50–64)", color: "bg-amber-400", band: "C" },
+            { label: "D (35–49)", color: "bg-orange-500", band: "D" },
+            { label: "F (0–34)", color: "bg-red-500", band: "F" },
+          ].map(({ label, color, band }) => (
+            <button
+              key={band}
+              onClick={() => onBandChange(activeBand === band ? null : band)}
+              className={`w-full flex items-center gap-2 px-2 py-1 rounded transition-colors ${
+                activeBand === band
+                  ? "bg-slate-100"
+                  : "hover:bg-slate-50"
+              }`}
+            >
+              <span className={`w-2.5 h-2.5 rounded-sm ${color}`} />
+              <span className={activeBand === band ? "text-slate-900 font-medium" : "text-slate-500"}>
+                {label}
+              </span>
+              {activeBand === band && (
+                <span className="ml-auto text-cyan-600">✓</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

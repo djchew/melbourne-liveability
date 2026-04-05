@@ -15,6 +15,7 @@ export interface SuburbScore extends SuburbSummary {
   score_greenspace: number | null;
   score_affordability: number | null;
   geometry: string | null;
+  description: string | null;
 }
 
 export async function getSuburbs(): Promise<SuburbSummary[]> {

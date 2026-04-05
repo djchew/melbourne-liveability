@@ -3,7 +3,7 @@ Base utilities for all ingestion scripts.
 """
 import os
 from pathlib import Path
-import psycopg
+import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,9 +13,9 @@ PROCESSED_DIR = Path(__file__).parent.parent / "data" / "processed"
 
 
 def get_db_connection():
-    """Return a psycopg connection using DATABASE_URL from .env."""
+    """Return a psycopg2 connection using DATABASE_URL from .env."""
     url = os.environ["DATABASE_URL"]
-    return psycopg.connect(url)
+    return psycopg2.connect(url)
 
 
 def inbound_path(filename: str) -> Path:

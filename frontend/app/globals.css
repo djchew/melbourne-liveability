@@ -30,3 +30,7 @@ body {
 .animate-slide-in {
   animation: slide-in 0.25s ease-out;
 }
+
+.transition-right {
+  transition: right 0.2s ease-out;
+}

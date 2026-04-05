@@ -14,6 +14,7 @@ class SuburbScore(BaseModel):
     latitude: Optional[float]
     longitude: Optional[float]
     geometry: Optional[str]
+    description: Optional[str]
 
     class Config:
         from_attributes = True

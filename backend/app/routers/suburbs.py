@@ -14,7 +14,9 @@ router = APIRouter(prefix="/suburbs", tags=["suburbs"])
 def get_suburbs_geojson(db: Session = Depends(get_db)):
     """Return all suburbs as a GeoJSON FeatureCollection for choropleth rendering."""
     result = db.execute(text("""
-        SELECT s.id AS suburb_id, s.name, s.geometry, ls.score_total
+        SELECT s.id AS suburb_id, s.name, s.geometry,
+               ls.score_total, ls.score_crime, ls.score_transport,
+               ls.score_schools, ls.score_greenspace, ls.score_affordability
         FROM suburbs s
         LEFT JOIN liveability_scores ls ON ls.suburb_id = s.id
         WHERE s.geometry IS NOT NULL
@@ -33,6 +35,11 @@ def get_suburbs_geojson(db: Session = Depends(get_db)):
                 "suburb_id": d["suburb_id"],
                 "name": d["name"],
                 "score_total": float(d["score_total"]) if d["score_total"] is not None else None,
+                "score_crime": float(d["score_crime"]) if d["score_crime"] is not None else None,
+                "score_transport": float(d["score_transport"]) if d["score_transport"] is not None else None,
+                "score_schools": float(d["score_schools"]) if d["score_schools"] is not None else None,
+                "score_greenspace": float(d["score_greenspace"]) if d["score_greenspace"] is not None else None,
+                "score_affordability": float(d["score_affordability"]) if d["score_affordability"] is not None else None,
             },
         })
     return JSONResponse({"type": "FeatureCollection", "features": features})
@@ -55,7 +62,7 @@ def get_suburb(suburb_id: int, db: Session = Depends(get_db)):
     """Return full score breakdown for a single suburb."""
     result = db.execute(text("""
         SELECT
-            s.id AS suburb_id, s.name, s.latitude, s.longitude, s.geometry,
+            s.id AS suburb_id, s.name, s.latitude, s.longitude, s.geometry, s.description,
             ls.score_crime, ls.score_transport, ls.score_schools,
             ls.score_greenspace, ls.score_affordability, ls.score_total
         FROM suburbs s
