@@ -27,69 +27,32 @@ interface AnalyticsSuburbData {
 
 export async function GET(request: NextRequest) {
   try {
-    // Fetch from Python backend geojson endpoint (includes all score components)
-    const response = await fetch(`${BACKEND_URL}/suburbs/geojson`, {
+    const response = await fetch(`${BACKEND_URL}/suburbs/`, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      console.error('Backend error:', response.status, response.statusText);
       return NextResponse.json(
         { error: 'Failed to fetch suburbs from backend' },
         { status: response.status }
       );
     }
 
-    const geojsonData = await response.json();
+    const data = await response.json();
 
-    // Extract suburbs from GeoJSON features
-    const transformedData: AnalyticsSuburbData[] = geojsonData.features
-      .map((feature: any) => {
-        const props = feature.properties;
+    // Return data as-is with placeholder null values for metric fields
+    const transformedData = data.map((suburb: any) => ({
+      name: suburb.name,
+      score_total: suburb.score_total || 0,
+      rate_per_100k: null,
+      stop_count: null,
+      avg_icsea_score: null,
+      green_pct_of_suburb: null,
+      median_house_price: null,
+    }));
 
-        // Denormalize scores back to approximate raw metric values
-        // These are educated estimates based on typical value ranges
-
-        // Crime rate: scores inversely, typical range 0-3000 per 100k
-        const rate_per_100k = props.score_crime != null
-          ? (100 - props.score_crime) * 30
-          : null;
-
-        // Transport stops: scores normally, typical range 0-200 stops
-        const stop_count = props.score_transport != null
-          ? Math.round((props.score_transport / 100) * 200)
-          : null;
-
-        // School ICSEA: scores normally, typical range 900-1200
-        const avg_icsea_score = props.score_schools != null
-          ? 900 + (props.score_schools / 100) * 300
-          : null;
-
-        // Green space %: scores normally, typical range 0-100%
-        const green_pct_of_suburb = props.score_greenspace != null
-          ? (props.score_greenspace / 100) * 100
-          : null;
-
-        // House price: scores inversely, typical range $300k-$2M
-        const median_house_price = props.score_affordability != null
-          ? 2000000 - (props.score_affordability / 100) * 1700000
-          : null;
-
-        return {
-          name: props.name,
-          score_total: props.score_total || 0,
-          rate_per_100k,
-          stop_count,
-          avg_icsea_score,
-          green_pct_of_suburb,
-          median_house_price,
-        };
-      })
-      .filter((s) => s.name);
-
-    // No caching to ensure fresh data
     return NextResponse.json(transformedData, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
