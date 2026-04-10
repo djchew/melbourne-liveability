@@ -24,6 +24,7 @@ interface SuburbData {
   score_schools: number | null;
   score_greenspace: number | null;
   score_affordability: number | null;
+  median_house_price: number | null;
 }
 
 export default function AnalyticsOverview() {
@@ -34,7 +35,7 @@ export default function AnalyticsOverview() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/suburbs");
+        const response = await fetch("/api/suburbs?lightweight=true");
         if (!response.ok) throw new Error("Failed to fetch data");
         const suburbs = await response.json();
         setData(suburbs);
@@ -74,6 +75,20 @@ export default function AnalyticsOverview() {
       ? Math.sqrt(scores.reduce((sum, score) => sum + Math.pow(score - parseFloat(meanScore), 2), 0) / scores.length).toFixed(1)
       : "0";
 
+  // Calculate house price statistics
+  const prices = data
+    .filter((d) => d.median_house_price != null)
+    .map((d) => d.median_house_price as number)
+    .sort((a, b) => a - b);
+
+  const meanPrice = prices.length > 0 ? prices.reduce((a, b) => a + b) / prices.length : 0;
+  const medianPrice = prices.length > 0
+    ? (prices.length % 2 === 0
+        ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
+        : prices[Math.floor(prices.length / 2)])
+    : 0;
+  const priceCoverage = data.length > 0 ? ((data.filter((d) => d.median_house_price != null).length / data.length) * 100).toFixed(1) : "0";
+
   // Calculate coverage
   const crimeCoverage = data.length > 0 ? ((data.filter((d) => d.score_crime != null).length / data.length) * 100).toFixed(1) : "0";
   const transportCoverage = data.length > 0 ? ((data.filter((d) => d.score_transport != null).length / data.length) * 100).toFixed(1) : "0";
@@ -92,7 +107,7 @@ export default function AnalyticsOverview() {
       {/* Stats Grid */}
       {!loading && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <StatCard
               label="📍 Total Suburbs"
               value={data.length}
@@ -111,17 +126,26 @@ export default function AnalyticsOverview() {
               accent="orange"
               icon={<Zap size={24} className="text-orange-600" />}
             />
-            <StatCard
-              label="📈 Std Dev"
-              value={stdDev}
-              accent="slate"
-            />
+            {prices.length > 0 && (
+              <>
+                <StatCard
+                  label="💰 Median House Price"
+                  value={`$${(medianPrice / 1000000).toFixed(2)}M`}
+                  accent="orange"
+                />
+                <StatCard
+                  label="💵 Mean House Price"
+                  value={`$${(meanPrice / 1000000).toFixed(2)}M`}
+                  accent="slate"
+                />
+              </>
+            )}
           </div>
 
           {/* Data Coverage Notice */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
             <p className="text-sm text-blue-800">
-              <span className="font-semibold">Data Quality:</span> Crime data {crimeCoverage}% complete, Transport {transportCoverage}% complete. School & property data ~66% complete.
+              <span className="font-semibold">Data Quality:</span> Crime data {crimeCoverage}% complete, Transport {transportCoverage}% complete, House prices {priceCoverage}% complete. School data ~66% complete.
             </p>
           </div>
 
@@ -151,6 +175,9 @@ export default function AnalyticsOverview() {
               <li>✓ <strong>{data.length} suburbs</strong> analyzed with liveability scores</li>
               <li>✓ Scores range from <strong>{Math.min(...scores).toFixed(1)}</strong> to <strong>{Math.max(...scores).toFixed(1)}</strong></li>
               <li>✓ Most suburbs cluster around <strong>{medianScore}</strong> (median)</li>
+              {prices.length > 0 && (
+                <li>✓ Median house price: <strong>${(medianPrice / 1000000).toFixed(2)}M</strong> across {prices.length} suburbs with data</li>
+              )}
               <li>✓ Crime & transport data most complete; use filters for full-data suburbs</li>
             </ul>
           </div>
