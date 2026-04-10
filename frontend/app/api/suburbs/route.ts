@@ -2,32 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
-interface BackendSuburbData {
-  suburb_id: number;
+interface SuburbScore {
   name: string;
-  score_total: number | null;
+  score_total: number;
   score_crime: number | null;
   score_transport: number | null;
   score_schools: number | null;
   score_greenspace: number | null;
   score_affordability: number | null;
-  latitude?: number;
-  longitude?: number;
-}
-
-interface AnalyticsSuburbData {
-  name: string;
-  score_total: number;
-  rate_per_100k: number | null;
-  stop_count: number | null;
-  avg_icsea_score: number | null;
-  green_pct_of_suburb: number | null;
-  median_house_price: number | null;
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${BACKEND_URL}/suburbs/`, {
+    const response = await fetch(`${BACKEND_URL}/suburbs/geojson`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -40,18 +27,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const data = await response.json();
+    const geojsonData = await response.json();
 
-    // Return data as-is with placeholder null values for metric fields
-    const transformedData = data.map((suburb: any) => ({
-      name: suburb.name,
-      score_total: suburb.score_total || 0,
-      rate_per_100k: null,
-      stop_count: null,
-      avg_icsea_score: null,
-      green_pct_of_suburb: null,
-      median_house_price: null,
-    }));
+    // Extract suburbs from GeoJSON features and return scores directly
+    const transformedData: SuburbScore[] = geojsonData.features
+      .map((feature: any) => ({
+        name: feature.properties.name,
+        score_total: feature.properties.score_total || 0,
+        score_crime: feature.properties.score_crime || null,
+        score_transport: feature.properties.score_transport || null,
+        score_schools: feature.properties.score_schools || null,
+        score_greenspace: feature.properties.score_greenspace || null,
+        score_affordability: feature.properties.score_affordability || null,
+      }))
+      .filter((s: SuburbScore) => s.name);
 
     return NextResponse.json(transformedData, {
       headers: {

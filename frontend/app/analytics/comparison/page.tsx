@@ -8,11 +8,11 @@ import { X, Plus, ChevronDown } from "lucide-react";
 interface SuburbData {
   name: string;
   score_total: number;
-  rate_per_100k: number | null;
-  stop_count: number | null;
-  avg_icsea_score: number | null;
-  green_pct_of_suburb: number | null;
-  median_house_price: number | null;
+  score_crime: number | null;
+  score_transport: number | null;
+  score_schools: number | null;
+  score_greenspace: number | null;
+  score_affordability: number | null;
 }
 
 export default function ComparisonPage() {
@@ -196,43 +196,43 @@ export default function ComparisonPage() {
                   </thead>
                   <tbody>
                     <tr className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900">Crime Rate (per 100k)</td>
+                      <td className="px-4 py-3 font-medium text-slate-900">Crime Safety Score</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.rate_per_100k != null ? suburb.rate_per_100k.toFixed(0) : "—"}
+                          {suburb.score_crime != null ? suburb.score_crime.toFixed(1) : "—"}
                         </td>
                       ))}
                     </tr>
                     <tr className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900">Transport Stops</td>
+                      <td className="px-4 py-3 font-medium text-slate-900">Transport Connectivity Score</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.stop_count != null ? suburb.stop_count : "—"}
+                          {suburb.score_transport != null ? suburb.score_transport.toFixed(1) : "—"}
                         </td>
                       ))}
                     </tr>
                     <tr className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900">School Score (ICSEA)</td>
+                      <td className="px-4 py-3 font-medium text-slate-900">School Quality Score</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.avg_icsea_score != null ? suburb.avg_icsea_score.toFixed(0) : "—"}
+                          {suburb.score_schools != null ? suburb.score_schools.toFixed(1) : "—"}
                         </td>
                       ))}
                     </tr>
                     <tr className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900">Green Space (%)</td>
+                      <td className="px-4 py-3 font-medium text-slate-900">Green Space Score</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.green_pct_of_suburb != null ? suburb.green_pct_of_suburb.toFixed(1) : "—"}%
+                          {suburb.score_greenspace != null ? suburb.score_greenspace.toFixed(1) : "—"}
                         </td>
                       ))}
                     </tr>
                     <tr className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-medium text-slate-900">Median House Price</td>
+                      <td className="px-4 py-3 font-medium text-slate-900">Affordability Score</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.median_house_price != null
-                            ? `$${(suburb.median_house_price / 1000000).toFixed(2)}M`
+                          {suburb.score_affordability != null
+                            ? suburb.score_affordability.toFixed(1)
                             : "—"}
                         </td>
                       ))}

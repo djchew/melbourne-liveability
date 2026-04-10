@@ -7,11 +7,11 @@ import { AlertCircle, TrendingUp, Target, Zap } from "lucide-react";
 interface SuburbData {
   name: string;
   score_total: number;
-  rate_per_100k: number | null;
-  stop_count: number | null;
-  avg_icsea_score: number | null;
-  green_pct_of_suburb: number | null;
-  median_house_price: number | null;
+  score_crime: number | null;
+  score_transport: number | null;
+  score_schools: number | null;
+  score_greenspace: number | null;
+  score_affordability: number | null;
 }
 
 interface Insight {
@@ -45,14 +45,18 @@ export default function InsightsPage() {
 
   const insights = useMemo((): Insight[] => {
     const scores = data.map((d) => d.score_total);
-    const crimeData = data.filter((d) => d.rate_per_100k != null).map((d) => d.rate_per_100k as number);
-    const transportData = data.filter((d) => d.stop_count != null).map((d) => d.stop_count as number);
-    const schoolData = data.filter((d) => d.avg_icsea_score != null).map((d) => d.avg_icsea_score as number);
-    const greenData = data.filter((d) => d.green_pct_of_suburb != null).map((d) => d.green_pct_of_suburb as number);
+    const crimeData = data.filter((d) => d.score_crime != null).map((d) => d.score_crime as number);
+    const transportData = data.filter((d) => d.score_transport != null).map((d) => d.score_transport as number);
+    const schoolData = data.filter((d) => d.score_schools != null).map((d) => d.score_schools as number);
+    const greenData = data.filter((d) => d.score_greenspace != null).map((d) => d.score_greenspace as number);
 
     const crimeCoverage = ((crimeData.length / data.length) * 100).toFixed(0);
     const transportCoverage = ((transportData.length / data.length) * 100).toFixed(0);
     const schoolCoverage = ((schoolData.length / data.length) * 100).toFixed(0);
+
+    if (scores.length === 0) {
+      return [];
+    }
 
     const topScoreSuburb = data.reduce((prev, current) =>
       prev.score_total > current.score_total ? prev : current
@@ -80,7 +84,7 @@ export default function InsightsPage() {
       },
       {
         title: "Crime Data Coverage",
-        description: `Crime data is available for ${crimeCoverage}% of suburbs, making it our most complete metric. This ensures reliable safety assessments across most of the region.`,
+        description: `Crime data is available for ${crimeCoverage}% of suburbs. This ensures reliable safety assessments across most of the region.`,
         icon: <AlertCircle className="w-6 h-6" />,
         color: "green",
       },

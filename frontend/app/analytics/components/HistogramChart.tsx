@@ -5,11 +5,11 @@ import { useMemo } from "react";
 interface SuburbData {
   name: string;
   score_total: number;
-  rate_per_100k: number | null;
-  stop_count: number | null;
-  avg_icsea_score: number | null;
-  green_pct_of_suburb: number | null;
-  median_house_price: number | null;
+  score_crime: number | null;
+  score_transport: number | null;
+  score_schools: number | null;
+  score_greenspace: number | null;
+  score_affordability: number | null;
 }
 
 interface HistogramChartProps {

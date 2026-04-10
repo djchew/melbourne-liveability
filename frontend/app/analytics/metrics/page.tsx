@@ -7,11 +7,11 @@ import { ChevronDown } from "lucide-react";
 interface SuburbData {
   name: string;
   score_total: number;
-  rate_per_100k: number | null;
-  stop_count: number | null;
-  avg_icsea_score: number | null;
-  green_pct_of_suburb: number | null;
-  median_house_price: number | null;
+  score_crime: number | null;
+  score_transport: number | null;
+  score_schools: number | null;
+  score_greenspace: number | null;
+  score_affordability: number | null;
 }
 
 interface MetricInfo {
@@ -25,42 +25,42 @@ interface MetricInfo {
 
 const METRICS: MetricInfo[] = [
   {
-    key: "rate_per_100k",
-    label: "Crime Rate",
-    description: "Crime incidents per 100,000 population (lower is better)",
-    unit: "per 100k",
+    key: "score_crime",
+    label: "Crime Safety Score",
+    description: "Safety score based on crime rates (higher is better)",
+    unit: "score",
     weight: 25,
     icon: "🚨",
   },
   {
-    key: "stop_count",
-    label: "Transport Connectivity",
-    description: "Number of public transport stops nearby (higher is better)",
-    unit: "stops",
+    key: "score_transport",
+    label: "Transport Connectivity Score",
+    description: "Score based on public transport access (higher is better)",
+    unit: "score",
     weight: 25,
     icon: "🚇",
   },
   {
-    key: "avg_icsea_score",
-    label: "School Quality",
-    description: "Average ICSEA score of schools (higher is better)",
-    unit: "ICSEA",
+    key: "score_schools",
+    label: "School Quality Score",
+    description: "Score based on school quality metrics (higher is better)",
+    unit: "score",
     weight: 20,
     icon: "🎓",
   },
   {
-    key: "green_pct_of_suburb",
-    label: "Green Space",
-    description: "Percentage of suburb covered by green space (higher is better)",
-    unit: "%",
+    key: "score_greenspace",
+    label: "Green Space Score",
+    description: "Score based on green space coverage (higher is better)",
+    unit: "score",
     weight: 15,
     icon: "🌳",
   },
   {
-    key: "median_house_price",
-    label: "Housing Affordability",
-    description: "Median house price (lower is better for affordability)",
-    unit: "$",
+    key: "score_affordability",
+    label: "Affordability Score",
+    description: "Score based on housing affordability (higher is better)",
+    unit: "score",
     weight: 15,
     icon: "🏠",
   },
@@ -92,7 +92,10 @@ export default function MetricsPage() {
 
   const metricStats = useMemo(() => {
     const values = data
-      .map((d) => d[selectedMetric.key] as number | null)
+      .map((d) => {
+        const key = selectedMetric.key as keyof SuburbData;
+        return d[key] as number | null;
+      })
       .filter((v): v is number => v != null);
 
     if (values.length === 0) {
@@ -126,11 +129,7 @@ export default function MetricsPage() {
       .sort((a, b) => {
         const aVal = a[selectedMetric.key] as number;
         const bVal = b[selectedMetric.key] as number;
-        // For crime rate and house price, lower is better
-        if (selectedMetric.key === "rate_per_100k" || selectedMetric.key === "median_house_price") {
-          return aVal - bVal;
-        }
-        // For others, higher is better
+        // For all scores, higher is better
         return bVal - aVal;
       });
 
@@ -139,9 +138,7 @@ export default function MetricsPage() {
 
   const formatValue = (value: number | null | undefined, unit: string): string => {
     if (value == null) return "—";
-    if (unit === "$") return `$${(value / 1000000).toFixed(2)}M`;
-    if (unit === "per 100k") return value.toFixed(0);
-    if (unit === "%") return `${value.toFixed(1)}%`;
+    if (unit === "score") return value.toFixed(1);
     return value.toFixed(1);
   };
 
@@ -241,9 +238,7 @@ export default function MetricsPage() {
                     {/* Top/Bottom Suburbs */}
                     <div className="bg-white rounded-lg border border-slate-200 p-4">
                       <p className="text-sm font-semibold text-slate-900 mb-4">
-                        {selectedMetric.key === "rate_per_100k" || selectedMetric.key === "median_house_price"
-                          ? "Best Suburbs (Lowest)"
-                          : "Best Suburbs (Highest)"}
+                        Best Suburbs (Highest Score)
                       </p>
                       <div className="space-y-2">
                         {rankedSuburbs.map((suburb, idx) => {

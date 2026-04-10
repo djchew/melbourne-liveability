@@ -19,11 +19,11 @@ const DynamicTopSuburbs = dynamic(() => import("./components/TopSuburbs"), {
 interface SuburbData {
   name: string;
   score_total: number;
-  rate_per_100k: number | null;
-  stop_count: number | null;
-  avg_icsea_score: number | null;
-  green_pct_of_suburb: number | null;
-  median_house_price: number | null;
+  score_crime: number | null;
+  score_transport: number | null;
+  score_schools: number | null;
+  score_greenspace: number | null;
+  score_affordability: number | null;
 }
 
 export default function AnalyticsOverview() {
@@ -75,8 +75,8 @@ export default function AnalyticsOverview() {
       : "0";
 
   // Calculate coverage
-  const crimeCoverage = data.length > 0 ? ((data.filter((d) => d.rate_per_100k != null).length / data.length) * 100).toFixed(1) : "0";
-  const transportCoverage = data.length > 0 ? ((data.filter((d) => d.stop_count != null).length / data.length) * 100).toFixed(1) : "0";
+  const crimeCoverage = data.length > 0 ? ((data.filter((d) => d.score_crime != null).length / data.length) * 100).toFixed(1) : "0";
+  const transportCoverage = data.length > 0 ? ((data.filter((d) => d.score_transport != null).length / data.length) * 100).toFixed(1) : "0";
 
   return (
     <div className="pt-8 pb-16">
