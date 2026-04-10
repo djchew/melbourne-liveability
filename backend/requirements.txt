@@ -7,3 +7,24 @@ pydantic>=2.9.0
 pandas>=2.2.0
 scikit-learn>=1.5.0
 requests>=2.32.0
+
+# Data validation & configuration
+pyyaml>=6.0
+jsonschema>=4.17.0
+
+# Monitoring & tracking
+numpy>=1.24.0
+
+# Data archiving
+pyarrow>=12.0.0
+
+# Dashboard & visualization
+streamlit>=1.28.0
+plotly>=5.17.0
+
+# Jupyter notebooks
+jupyter>=1.0.0
+notebook>=7.0.0
+ipykernel>=6.27.0
+matplotlib>=3.7.0
+seaborn>=0.13.0

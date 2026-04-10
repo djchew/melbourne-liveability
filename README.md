@@ -162,12 +162,109 @@ python scoring.py       # Calculate composite scores
 - **Backend-driven GeoJSON** — Server returns pre-computed geometries; frontend just renders them (efficient for 600+ suburbs)
 - **Hover-first UX** — Tooltips and search for discovery; click sidebar for detail view
 
+## Data Science Infrastructure
+
+**NEW:** Complete data science toolkit for analysis, validation, and monitoring:
+
+- **Configuration Management** — Centralized `config.yaml` for all parameters
+- **Data Validation** — Automated quality checks and coverage reporting
+- **Model Monitoring** — Score change detection and anomaly flagging
+- **Testing Framework** — Unit tests for scoring logic and edge cases
+- **Analysis Notebooks** — Exploratory analysis and sensitivity testing
+- **Interactive Dashboard** — Real-time data exploration (Streamlit)
+- **Data Archiving** — Version control for raw and processed data
+
+### Quick Start
+
+```bash
+# Run full pipeline with validation & monitoring
+python models/scoring.py
+
+# Launch interactive dashboard
+streamlit run dashboard/app.py
+
+# Explore in Jupyter notebooks
+jupyter notebook notebooks/
+
+# Run tests
+python -m pytest tests/ -v
+```
+
+**Learn more:** Read [DATA_SCIENCE_GUIDE.md](DATA_SCIENCE_GUIDE.md) and [QUICKSTART_ANALYSIS.md](QUICKSTART_ANALYSIS.md)
+
+## Architecture Changes
+
+### Before
+- Weights hardcoded in `models/scoring.py`
+- No validation checks
+- Manual data quality verification
+- Difficult to reproduce runs
+- No change detection
+
+### After
+```
+config.yaml → validation.py → scoring.py → monitoring.py → archiving.py
+   ↓              ↓              ↓             ↓              ↓
+weights      data checks    compute      track changes    version data
+             coverage       scores       detect drift      audit trail
+```
+
+## New Files
+
+```
+melbourne-liveability/
+├── config.yaml                              # Scoring weights, validation thresholds
+├── DATA_SCIENCE_GUIDE.md                   # Complete documentation
+├── QUICKSTART_ANALYSIS.md                  # Quick reference
+│
+├── ingestion/
+│   ├── config.py                           # Configuration loader
+│   ├── validation.py                       # Data quality checks
+│   └── archiving.py                        # Data versioning
+│
+├── models/
+│   └── monitoring.py                       # Score monitoring
+│
+├── tests/
+│   └── test_scoring.py                     # Unit tests
+│
+├── notebooks/
+│   ├── 01_exploratory_analysis.ipynb       # EDA
+│   └── 02_sensitivity_analysis.ipynb       # Weight sensitivity
+│
+├── dashboard/
+│   └── app.py                              # Streamlit dashboard
+│
+└── data/
+    ├── archive/                            # Raw data versions
+    └── processed/
+        ├── snapshots/                      # Processed data versions
+        ├── validation_report.json          # Data quality report
+        └── monitoring_report.json          # Score changes report
+```
+
+## Updated Dependencies
+
+Added for data science workflows:
+- `pyyaml` — Configuration management
+- `streamlit` — Interactive dashboard
+- `plotly` — Data visualization
+- `jupyter` — Notebooks
+- `matplotlib` + `seaborn` — Statistical plots
+- `pyarrow` — Efficient data archiving
+
+See [backend/requirements.txt](backend/requirements.txt)
+
 ## Notes
 
 - Suburb boundary polygons stored as GeoJSON TEXT in the database
 - Property prices and crime stats are year-based; currently using most recent year available
 - Transport scores computed via spatial joins (which stops fall within suburb boundaries)
 - Green space areas calculated in MGA Zone 55 projection (metres) for accuracy
+- **NEW:** All weights, validation thresholds, and fill strategies now configurable in `config.yaml`
+- **NEW:** Data validation runs automatically before scoring
+- **NEW:** Score changes and anomalies detected and reported after each run
+- **NEW:** Raw and processed data archived for reproducibility
 
 ## License
 
@@ -176,3 +273,9 @@ MIT
 ---
 
 For questions or contributions, open an issue or PR.
+
+### Data Science Resources
+- 📖 [Data Science Guide](DATA_SCIENCE_GUIDE.md) — Complete documentation
+- ⚡ [Quick Start](QUICKSTART_ANALYSIS.md) — Common tasks
+- 📊 [Dashboard](dashboard/) — Interactive exploration
+- 📓 [Notebooks](notebooks/) — Analysis and sensitivity testing

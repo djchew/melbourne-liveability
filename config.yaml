@@ -1,0 +1,105 @@
+# Melbourne Liveability Index Configuration
+
+# Scoring weights (must sum to 1.0)
+scoring:
+  weights:
+    crime: 0.25
+    transport: 0.25
+    schools: 0.20
+    greenspace: 0.15
+    affordability: 0.15
+
+  # Normalization range
+  score_range: [0, 100]
+
+  # Missing value fill strategy: 'median', 'mean', 'zero', or numeric value
+  fill_strategy: median
+  decimal_places: 2
+
+# Data ingestion configuration
+ingestion:
+  # Crime data
+  crime:
+    name: "Crime Statistics Agency Victoria"
+    expected_columns: ["suburb_id", "offence_count", "rate_per_100k"]
+    data_source_url: "https://www.crimestatistics.vic.gov.au/"
+    update_frequency_days: 365
+    min_coverage_pct: 90
+
+  # Transport data
+  transport:
+    name: "PTV GTFS"
+    expected_columns: ["suburb_id", "stop_count", "nearest_train_km", "nearest_tram_km", "nearest_bus_km"]
+    data_source_url: "https://www.ptv.vic.gov.au/"
+    update_frequency_days: 30
+    min_coverage_pct: 95
+    max_distance_km: 50
+
+  # School data
+  schools:
+    name: "ACARA My School"
+    expected_columns: ["suburb_id", "avg_icsea_score", "school_count"]
+    data_source_url: "https://www.myschool.edu.au/"
+    update_frequency_days: 365
+    min_coverage_pct: 60
+
+  # Green space data
+  greenspace:
+    name: "OpenStreetMap"
+    expected_columns: ["suburb_id", "green_pct_of_suburb", "park_count", "nearest_park_km"]
+    data_source_url: "https://www.openstreetmap.org/"
+    update_frequency_days: 90
+    min_coverage_pct: 95
+
+  # Property data
+  property:
+    name: "DFFH Property Data"
+    expected_columns: ["suburb_id", "median_house_price"]
+    data_source_url: "https://www.dffh.vic.gov.au/"
+    update_frequency_days: 365
+    min_coverage_pct: 60
+
+# Data validation thresholds
+validation:
+  outlier_std_threshold: 3.0  # Sigma threshold for outlier detection
+  max_missing_pct: 40  # Maximum allowed missing % per metric
+  min_suburbs: 400  # Minimum suburbs required for valid run
+
+  # Expected value ranges (for sanity checks)
+  value_ranges:
+    rate_per_100k: [0, 500]
+    stop_count: [0, 1000]
+    avg_icsea_score: [0, 1300]
+    green_pct_of_suburb: [0, 100]
+    median_house_price: [100000, 5000000]  # AUD
+
+# Monitoring configuration
+monitoring:
+  # Track score changes across runs
+  track_changes: true
+  change_threshold_pct: 5  # Flag if score changes by >5%
+
+  # Anomaly detection
+  detect_anomalies: true
+  anomaly_z_score: 2.5
+
+  # Keep historical records
+  history_retention_days: 730  # 2 years
+
+# Data archiving
+archiving:
+  enabled: true
+  archive_dir: "data/archive"
+  # Archive raw inbound data after successful ingestion
+  archive_raw_data: true
+  # Keep snapshots of processed data
+  keep_snapshots: true
+  snapshot_dir: "data/processed/snapshots"
+
+# Reproducibility
+reproducibility:
+  random_seed: 42
+  numpy_seed: 42
+  python_seed: 42
+  # Pin versions for exact reproducibility
+  pin_versions: true
