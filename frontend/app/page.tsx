@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import SuburbMap from "@/components/SuburbMap";
 import SuburbCard from "@/components/SuburbCard";
@@ -8,12 +9,13 @@ import SearchBar from "@/components/SearchBar";
 import BookmarksPanel from "@/components/BookmarksPanel";
 import { SuburbScore, SuburbSummary, getSuburbs, getSuburb } from "@/lib/api";
 import { useBookmarks } from "@/hooks/useBookmarks";
+import { BarChart3 } from "lucide-react";
 
 export default function Home() {
   const [selected, setSelected] = useState<SuburbScore | null>(null);
   const [suburbs, setSuburbs] = useState<SuburbSummary[]>([]);
   const [showBookmarks, setShowBookmarks] = useState(false);
-  const [activeMetric, setActiveMetric] = useState<string>("score_total");
+  const [activeMetrics, setActiveMetrics] = useState<string[]>(["score_total"]);
   const [activeBand, setActiveBand] = useState<string | null>(null);
 
   const { bookmarks, toggle: toggleBookmark, isBookmarked } = useBookmarks();
@@ -49,9 +51,9 @@ export default function Home() {
       {/* Map — full screen */}
       <SuburbMap
         onSuburbSelect={setSelected}
-        activeMetric={activeMetric}
+        activeMetrics={activeMetrics}
         activeBand={activeBand}
-        onMetricChange={setActiveMetric}
+        onMetricsChange={setActiveMetrics}
         onBandChange={setActiveBand}
       />
 
@@ -69,18 +71,35 @@ export default function Home() {
 
       {/* Sidebar — slides in from right when a suburb is selected */}
       {selected && (
-        <aside
-          className="absolute top-16 bottom-0 w-80 bg-white border-l border-slate-200 overflow-y-auto shadow-xl animate-slide-in transition-right"
-          style={{ right: showBookmarks ? "15rem" : "0px" }}
-        >
-          <SuburbCard
-            suburb={selected}
-            onClose={() => setSelected(null)}
-            isBookmarked={isBookmarked(selected.suburb_id)}
-            onToggleBookmark={handleToggleBookmark}
+        <>
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm z-30 md:hidden"
+            onClick={() => setSelected(null)}
+            aria-hidden="true"
           />
-        </aside>
+          {/* Sidebar */}
+          <aside
+            className="absolute top-16 bottom-0 right-0 w-full md:w-80 bg-white/95 backdrop-blur-sm border-l border-slate-200/50 overflow-y-auto shadow-2xl z-40"
+          >
+            <SuburbCard
+              suburb={selected}
+              onClose={() => setSelected(null)}
+              isBookmarked={isBookmarked(selected.suburb_id)}
+              onToggleBookmark={handleToggleBookmark}
+            />
+          </aside>
+        </>
       )}
+
+      {/* Analytics Quick Access Button */}
+      <Link
+        href="/analytics"
+        className="absolute bottom-8 right-8 bg-cyan-600 hover:bg-cyan-700 text-white rounded-full p-3 shadow-lg transition-all hover:shadow-xl hover:scale-110"
+        title="View Analytics Dashboard"
+      >
+        <BarChart3 size={24} />
+      </Link>
     </div>
   );
 }
