@@ -93,7 +93,7 @@ export default function MetricsPage() {
   const metricStats = useMemo(() => {
     const values = data
       .map((d) => d[selectedMetric.key] as number | null)
-      .filter((v): v is number => v !== null);
+      .filter((v): v is number => v != null);
 
     if (values.length === 0) {
       return {
@@ -122,7 +122,7 @@ export default function MetricsPage() {
 
   const rankedSuburbs = useMemo(() => {
     const filtered = data
-      .filter((d) => d[selectedMetric.key] !== null)
+      .filter((d) => d[selectedMetric.key] != null)
       .sort((a, b) => {
         const aVal = a[selectedMetric.key] as number;
         const bVal = b[selectedMetric.key] as number;
@@ -137,8 +137,8 @@ export default function MetricsPage() {
     return filtered.slice(0, 15);
   }, [data, selectedMetric]);
 
-  const formatValue = (value: number | null, unit: string): string => {
-    if (value === null) return "—";
+  const formatValue = (value: number | null | undefined, unit: string): string => {
+    if (value == null) return "—";
     if (unit === "$") return `$${(value / 1000000).toFixed(2)}M`;
     if (unit === "per 100k") return value.toFixed(0);
     if (unit === "%") return `${value.toFixed(1)}%`;

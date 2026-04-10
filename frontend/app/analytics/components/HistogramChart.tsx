@@ -80,15 +80,12 @@ export default function HistogramChart({ data }: HistogramChartProps) {
           <p className="text-xs text-slate-600 uppercase tracking-wide font-medium">Median</p>
           <p className="text-lg font-semibold text-slate-900">
             {data.length > 0
-              ? data.length % 2 === 0
-                ? (
-                    (data
-                      .map((d) => d.score_total)
-                      .sort((a, b) => a - b)[data.length / 2 - 1] +
-                      data.map((d) => d.score_total).sort((a, b) => a - b)[data.length / 2]) /
-                    2
-                  ).toFixed(1)
-                : data.map((d) => d.score_total).sort((a, b) => a - b)[Math.floor(data.length / 2)].toFixed(1)
+              ? (() => {
+                  const sorted = data.map((d) => d.score_total).sort((a, b) => a - b);
+                  return data.length % 2 === 0
+                    ? ((sorted[data.length / 2 - 1] + sorted[data.length / 2]) / 2).toFixed(1)
+                    : sorted[Math.floor(data.length / 2)].toFixed(1);
+                })()
               : "—"}
           </p>
         </div>

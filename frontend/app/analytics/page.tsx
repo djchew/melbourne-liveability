@@ -75,8 +75,8 @@ export default function AnalyticsOverview() {
       : "0";
 
   // Calculate coverage
-  const crimeCoverage = ((data.filter((d) => d.rate_per_100k !== null).length / data.length) * 100).toFixed(1);
-  const transportCoverage = ((data.filter((d) => d.stop_count !== null).length / data.length) * 100).toFixed(1);
+  const crimeCoverage = data.length > 0 ? ((data.filter((d) => d.rate_per_100k != null).length / data.length) * 100).toFixed(1) : "0";
+  const transportCoverage = data.length > 0 ? ((data.filter((d) => d.stop_count != null).length / data.length) * 100).toFixed(1) : "0";
 
   return (
     <div className="pt-8 pb-16">

@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from ingestion.base import get_db_connection
 """
 Liveability scoring model.
 Reads cleaned data from the DB, computes a composite score per suburb,

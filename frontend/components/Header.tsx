@@ -1,7 +1,9 @@
 "use client";
 
-import { HelpCircle, MapPin, Bookmark } from "lucide-react";
+import { HelpCircle, MapPin, Bookmark, BarChart3 } from "lucide-react";
 import MethodologyModal from "./MethodologyModal";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 interface Props {
@@ -11,6 +13,8 @@ interface Props {
 
 export default function Header({ bookmarkCount, onOpenBookmarks }: Props) {
   const [showMethodology, setShowMethodology] = useState(false);
+  const pathname = usePathname();
+  const isAnalytics = pathname?.startsWith("/analytics");
 
   return (
     <>
@@ -26,7 +30,34 @@ export default function Header({ bookmarkCount, onOpenBookmarks }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {/* Navigation Links */}
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className={`px-3 py-2 rounded-lg transition-colors ${
+                  !isAnalytics
+                    ? "bg-cyan-50 text-cyan-700 font-semibold"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <MapPin size={16} className="inline mr-1" />
+                Map
+              </Link>
+              <Link
+                href="/analytics"
+                className={`px-3 py-2 rounded-lg transition-colors ${
+                  isAnalytics
+                    ? "bg-cyan-50 text-cyan-700 font-semibold"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <BarChart3 size={16} className="inline mr-1" />
+                Analytics
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-2">
             <button
               onClick={onOpenBookmarks}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 transition-colors"
@@ -44,6 +75,7 @@ export default function Header({ bookmarkCount, onOpenBookmarks }: Props) {
             </button>
           </div>
         </div>
+      </div>
       </header>
 
       <MethodologyModal isOpen={showMethodology} onClose={() => setShowMethodology(false)} />

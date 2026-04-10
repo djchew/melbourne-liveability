@@ -45,10 +45,10 @@ export default function InsightsPage() {
 
   const insights = useMemo((): Insight[] => {
     const scores = data.map((d) => d.score_total);
-    const crimeData = data.filter((d) => d.rate_per_100k !== null).map((d) => d.rate_per_100k as number);
-    const transportData = data.filter((d) => d.stop_count !== null).map((d) => d.stop_count as number);
-    const schoolData = data.filter((d) => d.avg_icsea_score !== null).map((d) => d.avg_icsea_score as number);
-    const greenData = data.filter((d) => d.green_pct_of_suburb !== null).map((d) => d.green_pct_of_suburb as number);
+    const crimeData = data.filter((d) => d.rate_per_100k != null).map((d) => d.rate_per_100k as number);
+    const transportData = data.filter((d) => d.stop_count != null).map((d) => d.stop_count as number);
+    const schoolData = data.filter((d) => d.avg_icsea_score != null).map((d) => d.avg_icsea_score as number);
+    const greenData = data.filter((d) => d.green_pct_of_suburb != null).map((d) => d.green_pct_of_suburb as number);
 
     const crimeCoverage = ((crimeData.length / data.length) * 100).toFixed(0);
     const transportCoverage = ((transportData.length / data.length) * 100).toFixed(0);

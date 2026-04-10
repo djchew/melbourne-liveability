@@ -199,7 +199,7 @@ export default function ComparisonPage() {
                       <td className="px-4 py-3 font-medium text-slate-900">Crime Rate (per 100k)</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.rate_per_100k !== null ? suburb.rate_per_100k.toFixed(0) : "—"}
+                          {suburb.rate_per_100k != null ? suburb.rate_per_100k.toFixed(0) : "—"}
                         </td>
                       ))}
                     </tr>
@@ -207,7 +207,7 @@ export default function ComparisonPage() {
                       <td className="px-4 py-3 font-medium text-slate-900">Transport Stops</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.stop_count !== null ? suburb.stop_count : "—"}
+                          {suburb.stop_count != null ? suburb.stop_count : "—"}
                         </td>
                       ))}
                     </tr>
@@ -215,7 +215,7 @@ export default function ComparisonPage() {
                       <td className="px-4 py-3 font-medium text-slate-900">School Score (ICSEA)</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.avg_icsea_score !== null ? suburb.avg_icsea_score.toFixed(0) : "—"}
+                          {suburb.avg_icsea_score != null ? suburb.avg_icsea_score.toFixed(0) : "—"}
                         </td>
                       ))}
                     </tr>
@@ -223,7 +223,7 @@ export default function ComparisonPage() {
                       <td className="px-4 py-3 font-medium text-slate-900">Green Space (%)</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.green_pct_of_suburb !== null ? suburb.green_pct_of_suburb.toFixed(1) : "—"}%
+                          {suburb.green_pct_of_suburb != null ? suburb.green_pct_of_suburb.toFixed(1) : "—"}%
                         </td>
                       ))}
                     </tr>
@@ -231,7 +231,7 @@ export default function ComparisonPage() {
                       <td className="px-4 py-3 font-medium text-slate-900">Median House Price</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
-                          {suburb.median_house_price !== null
+                          {suburb.median_house_price != null
                             ? `$${(suburb.median_house_price / 1000000).toFixed(2)}M`
                             : "—"}
                         </td>
