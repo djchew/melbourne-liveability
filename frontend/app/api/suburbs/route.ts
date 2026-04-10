@@ -27,8 +27,8 @@ interface AnalyticsSuburbData {
 
 export async function GET(request: NextRequest) {
   try {
-    // Fetch from Python backend
-    const response = await fetch(`${BACKEND_URL}/suburbs/`, {
+    // Fetch from Python backend geojson endpoint (includes all score components)
+    const response = await fetch(`${BACKEND_URL}/suburbs/geojson`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -42,7 +42,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const backendData: BackendSuburbData[] = await response.json();
+    const geojsonData = await response.json();
+
+    // Extract suburbs from GeoJSON features
+    const backendData: BackendSuburbData[] = geojsonData.features.map((feature: any) => ({
+      ...feature.properties,
+      suburb_id: feature.properties.suburb_id,
+    }));
 
     // Transform backend data to include metric fields
     // Map scored metrics to raw metric estimates based on normalized scores
