@@ -4,8 +4,14 @@ export interface SuburbSummary {
   suburb_id: number;
   name: string;
   score_total: number | null;
+  score_crime: number | null;
+  score_transport: number | null;
+  score_schools: number | null;
+  score_greenspace: number | null;
+  score_affordability: number | null;
   latitude: number | null;
   longitude: number | null;
+  median_house_price: number | null;
 }
 
 export interface SuburbScore extends SuburbSummary {
@@ -16,6 +22,7 @@ export interface SuburbScore extends SuburbSummary {
   score_affordability: number | null;
   geometry: string | null;
   description: string | null;
+  median_house_price: number | null;
 }
 
 export async function getSuburbs(): Promise<SuburbSummary[]> {

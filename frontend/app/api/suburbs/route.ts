@@ -10,11 +10,17 @@ interface SuburbScore {
   score_schools: number | null;
   score_greenspace: number | null;
   score_affordability: number | null;
+  median_house_price: number | null;
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const response = await fetch(`${BACKEND_URL}/suburbs/geojson`, {
+    // Check if lightweight (scores-only) version is requested
+    const searchParams = request.nextUrl.searchParams;
+    const lightweight = searchParams.get('lightweight') === 'true';
+
+    const endpoint = lightweight ? '/suburbs' : '/suburbs/geojson';
+    const response = await fetch(`${BACKEND_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -27,19 +33,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const geojsonData = await response.json();
+    const data = await response.json();
+    const features = lightweight ? data : data.features;
 
-    // Extract suburbs from GeoJSON features and return scores directly
-    const transformedData: SuburbScore[] = geojsonData.features
-      .map((feature: any) => ({
-        name: feature.properties.name,
-        score_total: feature.properties.score_total || 0,
-        score_crime: feature.properties.score_crime || null,
-        score_transport: feature.properties.score_transport || null,
-        score_schools: feature.properties.score_schools || null,
-        score_greenspace: feature.properties.score_greenspace || null,
-        score_affordability: feature.properties.score_affordability || null,
-      }))
+    // Extract suburbs from features and return scores
+    const transformedData: SuburbScore[] = features
+      .map((feature: any) => {
+        const props = lightweight ? feature : feature.properties;
+        return {
+          name: props.name,
+          score_total: props.score_total || 0,
+          score_crime: props.score_crime || null,
+          score_transport: props.score_transport || null,
+          score_schools: props.score_schools || null,
+          score_greenspace: props.score_greenspace || null,
+          score_affordability: props.score_affordability || null,
+          median_house_price: props.median_house_price || null,
+        };
+      })
       .filter((s: SuburbScore) => s.name);
 
     return NextResponse.json(transformedData, {
