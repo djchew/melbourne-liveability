@@ -13,6 +13,7 @@ interface SuburbData {
   score_schools: number | null;
   score_greenspace: number | null;
   score_affordability: number | null;
+  median_house_price: number | null;
 }
 
 export default function ComparisonPage() {
@@ -26,7 +27,7 @@ export default function ComparisonPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/suburbs");
+        const response = await fetch("/api/suburbs?lightweight=true");
         if (!response.ok) throw new Error("Failed to fetch data");
         const suburbs = await response.json();
         setAllSuburbs(suburbs);
@@ -227,12 +228,22 @@ export default function ComparisonPage() {
                         </td>
                       ))}
                     </tr>
-                    <tr className="hover:bg-slate-50">
+                    <tr className="border-b border-slate-200 hover:bg-slate-50">
                       <td className="px-4 py-3 font-medium text-slate-900">Affordability Score</td>
                       {selectedSuburbs.map((suburb) => (
                         <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
                           {suburb.score_affordability != null
                             ? suburb.score_affordability.toFixed(1)
+                            : "—"}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium text-slate-900">Median House Price</td>
+                      {selectedSuburbs.map((suburb) => (
+                        <td key={suburb.name} className="text-right px-4 py-3 text-slate-700">
+                          {suburb.median_house_price != null
+                            ? `$${(suburb.median_house_price / 1000000).toFixed(2)}M`
                             : "—"}
                         </td>
                       ))}
