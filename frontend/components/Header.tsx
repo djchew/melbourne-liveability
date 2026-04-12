@@ -7,11 +7,11 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 interface Props {
-  bookmarkCount: number;
-  onOpenBookmarks: () => void;
+  bookmarkCount?: number;
+  onOpenBookmarks?: () => void;
 }
 
-export default function Header({ bookmarkCount, onOpenBookmarks }: Props) {
+export default function Header({ bookmarkCount = 0, onOpenBookmarks }: Props) {
   const [showMethodology, setShowMethodology] = useState(false);
   const pathname = usePathname();
   const isAnalytics = pathname?.startsWith("/analytics");
@@ -58,22 +58,24 @@ export default function Header({ bookmarkCount, onOpenBookmarks }: Props) {
             </div>
 
             <div className="flex items-center gap-2">
-            <button
-              onClick={onOpenBookmarks}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 transition-colors"
-              title={`${bookmarkCount} bookmarked`}
-            >
-              <Bookmark size={16} className="fill-cyan-600 text-cyan-600" />
-              <span className="text-sm font-semibold text-cyan-700">{bookmarkCount}</span>
-            </button>
-            <button
-              onClick={() => setShowMethodology(true)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              title="How are scores calculated?"
-            >
-              <HelpCircle size={18} className="text-slate-600" />
-            </button>
-          </div>
+              {onOpenBookmarks && (
+                <button
+                  onClick={onOpenBookmarks}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 transition-colors"
+                  title={`${bookmarkCount} bookmarked`}
+                >
+                  <Bookmark size={16} className="fill-cyan-600 text-cyan-600" />
+                  <span className="text-sm font-semibold text-cyan-700">{bookmarkCount}</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowMethodology(true)}
+                className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                title="How are scores calculated?"
+              >
+                <HelpCircle size={18} className="text-slate-600" />
+              </button>
+            </div>
         </div>
       </div>
       </header>

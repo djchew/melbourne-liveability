@@ -27,22 +27,24 @@ export default function BookmarksPanel({
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-30"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
       {/* Panel */}
       <aside
-        className={`fixed top-16 right-0 bottom-0 w-60 bg-white border-l border-slate-200 overflow-y-auto transition-transform duration-200 z-40 ${
+        className={`fixed top-16 right-0 bottom-0 w-60 bg-white/95 backdrop-blur-sm border-l border-slate-200/50 overflow-y-auto transition-transform duration-300 ease-out z-40 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-slate-200/50 px-5 py-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900">Bookmarks</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Close bookmarks"
           >
             <X size={16} className="text-slate-400" />
           </button>

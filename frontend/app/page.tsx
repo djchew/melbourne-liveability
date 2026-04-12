@@ -15,7 +15,7 @@ export default function Home() {
   const [selected, setSelected] = useState<SuburbScore | null>(null);
   const [suburbs, setSuburbs] = useState<SuburbSummary[]>([]);
   const [showBookmarks, setShowBookmarks] = useState(false);
-  const [activeMetrics, setActiveMetrics] = useState<string[]>(["score_total"]);
+  const [activeMetrics, setActiveMetrics] = useState<string[]>(["score_crime", "score_transport", "score_schools", "score_greenspace", "score_affordability"]);
   const [activeBand, setActiveBand] = useState<string | null>(null);
 
   const { bookmarks, toggle: toggleBookmark, isBookmarked } = useBookmarks();

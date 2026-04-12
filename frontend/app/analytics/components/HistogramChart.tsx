@@ -47,38 +47,40 @@ export default function HistogramChart({ data }: HistogramChartProps) {
   }, [data]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {/* Histogram Bars */}
-      <div className="space-y-2">
+      <div className="space-y-4">
         {bins.map((bin, idx) => (
-          <div key={bin}>
-            <div className="flex items-end gap-3">
-              <div className="w-12 text-xs text-slate-600 font-medium">{bin}</div>
-              <div className="flex-1 flex items-end gap-1">
-                <div
-                  className="bg-gradient-to-r from-cyan-400 to-cyan-600 rounded-t-lg transition-all hover:shadow-md"
-                  style={{
-                    height: `${Math.max(20, (counts[idx] / maxCount) * 80)}px`,
-                  }}
-                />
-                <span className="text-xs text-slate-500 ml-1 pb-1">{counts[idx]}</span>
-              </div>
+          <div key={bin} className="flex items-center gap-4">
+            <div className="w-14 text-right">
+              <p className="text-sm text-slate-600">{bin}</p>
+            </div>
+            <div className="flex-1 h-8 bg-slate-100 rounded overflow-hidden">
+              <div
+                className="h-full bg-cyan-600 transition-all"
+                style={{
+                  width: `${Math.max(2, (counts[idx] / maxCount) * 100)}%`,
+                }}
+              />
+            </div>
+            <div className="w-8 text-right">
+              <p className="text-sm font-medium text-slate-900">{counts[idx]}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Stats Footer */}
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-200">
+      <div className="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200">
         <div>
-          <p className="text-xs text-slate-600 uppercase tracking-wide font-medium">Mean</p>
-          <p className="text-lg font-semibold text-slate-900">
+          <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Mean Score</p>
+          <p className="text-3xl font-bold text-slate-900">
             {data.length > 0 ? (data.reduce((sum, d) => sum + d.score_total, 0) / data.length).toFixed(1) : "—"}
           </p>
         </div>
         <div>
-          <p className="text-xs text-slate-600 uppercase tracking-wide font-medium">Median</p>
-          <p className="text-lg font-semibold text-slate-900">
+          <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Median Score</p>
+          <p className="text-3xl font-bold text-slate-900">
             {data.length > 0
               ? (() => {
                   const sorted = data.map((d) => d.score_total).sort((a, b) => a - b);
@@ -90,8 +92,8 @@ export default function HistogramChart({ data }: HistogramChartProps) {
           </p>
         </div>
         <div>
-          <p className="text-xs text-slate-600 uppercase tracking-wide font-medium">Mode</p>
-          <p className="text-lg font-semibold text-slate-900">
+          <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold mb-2">Most Common</p>
+          <p className="text-3xl font-bold text-slate-900">
             {data.length > 0 ? Math.max(...counts) : "—"}
           </p>
         </div>

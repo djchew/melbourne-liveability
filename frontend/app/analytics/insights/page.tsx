@@ -29,7 +29,7 @@ export default function InsightsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/suburbs");
+        const response = await fetch("/api/suburbs?lightweight=true");
         if (!response.ok) throw new Error("Failed to fetch data");
         const suburbs = await response.json();
         setData(suburbs);
@@ -53,10 +53,25 @@ export default function InsightsPage() {
     const crimeCoverage = ((crimeData.length / data.length) * 100).toFixed(0);
     const transportCoverage = ((transportData.length / data.length) * 100).toFixed(0);
     const schoolCoverage = ((schoolData.length / data.length) * 100).toFixed(0);
+    const greenCoverage = ((greenData.length / data.length) * 100).toFixed(0);
 
     if (scores.length === 0) {
       return [];
     }
+
+    // Find metric with highest coverage
+    const coverageMap = {
+      crime: parseFloat(crimeCoverage),
+      transport: parseFloat(transportCoverage),
+      schools: parseFloat(schoolCoverage),
+      green: parseFloat(greenCoverage),
+    };
+    const entries = Object.entries(coverageMap);
+    const mostCompleteCoverage = entries.reduce((prev, current) =>
+      current[1] > prev[1] ? current : prev,
+      entries[0]
+    );
+    const mostCompleteMetric = mostCompleteCoverage?.[0] || "transport";
 
     const topScoreSuburb = data.reduce((prev, current) =>
       prev.score_total > current.score_total ? prev : current
@@ -64,6 +79,14 @@ export default function InsightsPage() {
 
     const avgScore = (scores.reduce((a, b) => a + b) / scores.length).toFixed(1);
     const scoreRange = (Math.max(...scores) - Math.min(...scores)).toFixed(1);
+
+    // Generate insights based on actual coverage
+    const metricLabels: Record<string, string> = {
+      crime: "Crime Safety",
+      transport: "Transport Connectivity",
+      schools: "School Quality",
+      green: "Green Space",
+    };
 
     const insightsList: Insight[] = [
       {
@@ -83,14 +106,14 @@ export default function InsightsPage() {
         color: "orange",
       },
       {
-        title: "Crime Data Coverage",
-        description: `Crime data is available for ${crimeCoverage}% of suburbs. This ensures reliable safety assessments across most of the region.`,
+        title: "Most Complete Metric",
+        description: `${metricLabels[mostCompleteMetric]} data is our most complete, available for ${mostCompleteCoverage[1].toFixed(0)}% of suburbs. This ensures the most reliable assessments for this metric across the region.`,
         icon: <AlertCircle className="w-6 h-6" />,
         color: "green",
       },
       {
-        title: "Transport Connectivity",
-        description: `${transportCoverage}% of suburbs have transport data, indicating comprehensive public transit coverage tracking. This is critical for liveability assessment.`,
+        title: "Comprehensive Coverage",
+        description: `With ${transportCoverage}% transport and ${crimeCoverage}% crime data coverage, we have broad visibility into the factors that most affect liveability across suburbs.`,
         icon: <Zap className="w-6 h-6" />,
         color: "purple",
       },

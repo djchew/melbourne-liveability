@@ -48,7 +48,8 @@ export default function SearchBar({ suburbs, onSelect }: Props) {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          className="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all shadow-sm"
+          className="w-full pl-9 pr-8 py-2.5 bg-white/90 backdrop-blur-sm border border-white/50 rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 transition-all shadow-lg"
+          aria-label="Search suburbs"
         />
         {query && (
           <button
@@ -57,7 +58,8 @@ export default function SearchBar({ suburbs, onSelect }: Props) {
               setOpen(false);
               inputRef.current?.focus();
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="Clear search"
           >
             <X size={14} />
           </button>
@@ -66,7 +68,7 @@ export default function SearchBar({ suburbs, onSelect }: Props) {
 
       {/* Dropdown results */}
       {open && filtered.length > 0 && (
-        <div className="mt-1 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-lg">
+        <div className="mt-2 bg-white/95 backdrop-blur-sm border border-white/50 rounded-xl overflow-hidden shadow-xl">
           {filtered.map((s) => (
             <button
               key={s.suburb_id}

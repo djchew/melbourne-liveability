@@ -76,7 +76,7 @@ export default function MetricsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/suburbs");
+        const response = await fetch("/api/suburbs?lightweight=true");
         if (!response.ok) throw new Error("Failed to fetch data");
         const suburbs = await response.json();
         setData(suburbs);
